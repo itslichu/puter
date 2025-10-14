@@ -105,6 +105,56 @@ if (window.user_preferences === null) {
 window.window_stack = []
 window.toolbar_height = 30;
 window.default_taskbar_height = 50;
+
+// Toolbar auto-hide feature variables
+window.toolbar_auto_hide_timeout = null;
+window.toolbar_hidden = false;
+window.toolbar_auto_hide_delay = 2000; // 2 seconds
+window.toolbar_proximity_zone = 50; // top 50px
+
+// Toolbar auto-hide functions
+window.show_toolbar = function() {
+    const toolbar = document.querySelector('.toolbar');
+    if (toolbar && window.toolbar_hidden) {
+        toolbar.classList.remove('toolbar-hidden');
+        window.toolbar_hidden = false;
+        console.log('Toolbar shown');
+    }
+};
+
+window.hide_toolbar = function() {
+    const toolbar = document.querySelector('.toolbar');
+    if (toolbar && !window.toolbar_hidden) {
+        toolbar.classList.add('toolbar-hidden');
+        window.toolbar_hidden = true;
+        console.log('Toolbar hidden');
+    }
+};
+
+// Toolbar timeout management functions
+window.start_hide_timer = function() {
+    // Clear any existing timeout
+    if (window.toolbar_auto_hide_timeout) {
+        clearTimeout(window.toolbar_auto_hide_timeout);
+    }
+    
+    // Only start timer if toolbar is visible
+    if (!window.toolbar_hidden) {
+        window.toolbar_auto_hide_timeout = setTimeout(() => {
+            console.log('Auto-hide timer triggered - hiding toolbar');
+            window.hide_toolbar();
+            window.toolbar_auto_hide_timeout = null;
+        }, window.toolbar_auto_hide_delay);
+    }
+};
+
+window.clear_hide_timer = function() {
+    if (window.toolbar_auto_hide_timeout) {
+        clearTimeout(window.toolbar_auto_hide_timeout);
+        window.toolbar_auto_hide_timeout = null;
+        console.log('Hide timer cleared');
+    }
+};
 window.taskbar_height = window.default_taskbar_height;
 window.upload_progress_hide_delay = 500;
 window.active_uploads = {};

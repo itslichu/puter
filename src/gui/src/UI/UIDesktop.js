@@ -1145,6 +1145,13 @@ async function UIDesktop(options){
     // prepend toolbar to desktop
     $(ht).insertBefore(el_desktop);
 
+    // Initialize toolbar auto-hide system
+    // Start the initial hide timer after a short delay to let the page settle
+    setTimeout(() => {
+        console.log('Initializing toolbar auto-hide system');
+        window.start_hide_timer();
+    }, 1000);
+
     // notification container
     $('body').append(`<div class="notification-container"><div class="notifications-close-all">${i18n('close_all')}</div></div>`);
 
