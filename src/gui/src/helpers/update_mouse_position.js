@@ -46,6 +46,19 @@ const update_mouse_position = function(x, y){
     else
         window.current_active_snap_zone = undefined;
 
+    // Toolbar auto-hide proximity detection
+    if (window.mouseY < window.toolbar_proximity_zone && window.mouseY >= 0) {
+        // Mouse is near the top edge - show toolbar and clear any hide timer
+        if (window.toolbar_hidden) {
+            console.log('Mouse near top edge - showing toolbar');
+            window.show_toolbar();
+        }
+        window.clear_hide_timer();
+    } else {
+        // Mouse is away from top edge - start hide timer if toolbar is visible
+        window.start_hide_timer();
+    }
+
     // mouseover_window
     var windows = document.getElementsByClassName("window");
     let active_win;

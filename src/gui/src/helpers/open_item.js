@@ -55,6 +55,33 @@ const open_item = async function(options){
         UIAlert(`This item can't be opened because it's in the trash. To use this item, first drag it out of the Trash.`)
     }
     //----------------------------------------------------------------
+    // Is this a .weblink file?
+    //----------------------------------------------------------------
+    else if(!is_dir && item_path.toLowerCase().endsWith('.weblink')){
+        try {
+            // Ensure we have a proper Unix-style path
+            const normalizedPath = item_path.replace(/\\/g, '/');
+            
+            // Read the weblink file content
+            const content = await puter.fs.read(normalizedPath);
+            
+            // Try to parse as JSON
+            let weblinkData;
+            if (typeof content === 'string') {
+                weblinkData = JSON.parse(content);
+            } else {
+                // If it's a Blob, convert to text
+                const text = await content.text();
+                weblinkData = JSON.parse(text);
+            }
+            
+            // Open the URL in a new tab with security attributes
+            window.open(weblinkData.url, '_blank', 'noopener,noreferrer');
+        } catch (error) {
+            UIAlert('Failed to open link. The weblink file may be corrupted.');
+        }
+    }
+    //----------------------------------------------------------------
     // Is this a file (no dir) on a SaveFileDialog?
     //----------------------------------------------------------------
     else if($el_parent_window.attr('data-is_saveFileDialog') === 'true' && !is_dir){
