@@ -870,6 +870,98 @@ window.create_file = async(options)=>{
     }
 }
 
+// URL detection helper
+window.isValidUrl = (string) => {
+    if (!string || typeof string !== 'string') return false;
+    
+    // Basic URL validation
+    if (!string.startsWith('http://') && !string.startsWith('https://')) {
+        return false;
+    }
+    
+    try {
+        new URL(string);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+// Create weblink from URL
+window.create_weblink_from_url = async (url, dirname, append_to_element) => {
+    // Create filename from domain with collision prevention
+    let filename;
+    let domain;
+
+    try {
+        const urlObj = new URL(url);
+        domain = urlObj.hostname;
+        // Add timestamp to prevent filename collisions
+        filename = `${domain}-${Date.now()}.weblink`;
+    } catch (e) {
+        console.warn('Failed to parse URL for filename:', url, e);
+        // Sanitize URL string as fallback
+        const sanitized = url.replace(/[^a-z0-9]/gi, '_').slice(0, 50);
+        filename = `${sanitized}.weblink`;
+        domain = 'Unknown';
+    }
+
+    // Create weblink file content
+    const weblinkData = {
+        url: url,
+        name: domain,  // Use domain directly instead of redundant string manipulation
+        created: Date.now()
+    };
+    const content = JSON.stringify(weblinkData, null, 2);
+
+    // Create a proper File object with the JSON content
+    const file = new File([content], filename, { type: 'application/json' });
+
+    // Create the file
+    await window.create_file({
+        dirname: dirname,
+        append_to_element: append_to_element,
+        name: filename,
+        content: file
+    });
+
+    // Manually create the UI item immediately
+    try {
+        // Safe path concatenation
+        const filePath = dirname.endsWith('/')
+            ? `${dirname}${filename}`
+            : `${dirname}/${filename}`;
+
+        const fileStat = await puter.fs.stat(filePath);
+        const icon = await item_icon(fileStat);
+
+        UIItem({
+            appendTo: append_to_element,
+            uid: fileStat.uid,
+            path: filePath,
+            icon: icon,
+            name: filename,
+            is_dir: false,
+            size: fileStat.size,
+            type: fileStat.type,
+            modified: fileStat.modified,
+            is_selected: false,
+            is_shared: false,
+        });
+
+        // Sort the items after adding
+        if (append_to_element) {
+            window.sort_items(append_to_element, $(append_to_element).attr('data-sort_by'), $(append_to_element).attr('data-sort_order'));
+        }
+    } catch (error) {
+        console.warn('Could not create UI item immediately:', error);
+        // Fallback to refresh
+        if (append_to_element && window.refresh_item_container) {
+            window.refresh_item_container(append_to_element);
+        }
+    }
+}
+
 window.available_templates = async () => {
     const baseRoute = `/${window.user.username}`
     const keywords = ["template", "templates", i18n('template')]

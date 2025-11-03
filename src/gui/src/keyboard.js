@@ -733,25 +733,46 @@ $(document).bind("keyup keydown", async function(e){
     if((e.ctrlKey || e.metaKey) && e.which === 86 && !$(focused_el).is('input') && !$(focused_el).is('textarea')){
         let target_path, target_el;
 
-        // continue only if there is something in the clipboard
-        if(window.clipboard.length === 0)
-            return;
+        // Check if we have clipboard items first
+        if(window.clipboard.length > 0){
+            let parent_container = determine_active_container_parent();
 
-        let parent_container = determine_active_container_parent();
-
-        if(parent_container){
-            target_el = parent_container;
-            target_path = $(parent_container).attr('data-path');
-            // don't allow pasting in Trash
-            if((target_path === window.trash_path || target_path.startsWith(window.trash_path + '/')) && window.clipboard_op !== 'move')
-                return;
-            // execute clipboard operation
-            if(window.clipboard_op === 'copy')
-                window.copy_clipboard_items(target_path);
-            else if(window.clipboard_op === 'move')
-                window.move_clipboard_items(target_el, target_path);
+            if(parent_container){
+                target_el = parent_container;
+                target_path = $(parent_container).attr('data-path');
+                // don't allow pasting in Trash
+                if((target_path === window.trash_path || target_path.startsWith(window.trash_path + '/')) && window.clipboard_op !== 'move')
+                    return;
+                // execute clipboard operation
+                if(window.clipboard_op === 'copy')
+                    window.copy_clipboard_items(target_path);
+                else if(window.clipboard_op === 'move')
+                    window.move_clipboard_items(target_el, target_path);
+            }
+            return false;
         }
-        return false;
+
+        // Check for URL paste (when clipboard is empty but user pastes text)
+        try {
+            // Try to read from clipboard
+            const clipboardText = await navigator.clipboard.readText();
+            if(clipboardText && window.isValidUrl(clipboardText)){
+                let parent_container = determine_active_container_parent();
+                if(parent_container){
+                    target_path = $(parent_container).attr('data-path');
+                    // don't allow pasting in Trash
+                    if(target_path === window.trash_path || target_path.startsWith(window.trash_path + '/'))
+                        return;
+                    
+                    // Create weblink from URL
+                    await window.create_weblink_from_url(clipboardText, target_path, parent_container);
+                }
+                return false;
+            }
+        } catch (error) {
+            console.log('Clipboard access failed:', error);
+            // Clipboard access failed, continue with normal paste
+        }
     }
     //-----------------------------------------------------------------------------
     // Undo

@@ -70,6 +70,24 @@ const new_context_menu_item = function(dirname, append_to_element){
                 });
             }
         },
+        // New Link
+        {
+            html: i18n('new_link'),
+            icon: `<img src="${html_encode(window.icons['link.svg'])}" class="ctx-item-icon">`,
+            onClick: async function() {
+                const url = prompt('Enter the URL for your link:');
+                if (!url) return; // User cancelled
+
+                // Validate URL using shared helper function
+                if (!window.isValidUrl(url)) {
+                    alert('Please enter a valid URL starting with http:// or https://');
+                    return;
+                }
+
+                // Use shared weblink creation function
+                await window.create_weblink_from_url(url, dirname, append_to_element);
+            }
+        },
     ];
 
     //Show file_templates on the lower part of "New"
